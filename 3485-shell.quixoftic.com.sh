@@ -130,6 +130,12 @@ perform the following steps manually:
 - copy the contents of the /home filesystem to the encrypted
   filesystem on /dev/xvdd
 
+- install the imap.quixoftic.com SSL key.
+
+- install the mx1.quixoftic.com SSL key.
+
+- install any required DKIM keys.
+
 You should then reboot the host immediately with a pv-grub config
 profile. Don't forget to disable the 'Xenify Distro' option!
 
@@ -150,6 +156,12 @@ perform the following steps manually:
 
 - copy the contents of the /home filesystem to the encrypted
   filesystem on /dev/xvdd
+
+- install the imap.quixoftic.com SSL key.
+
+- install the mx1.quixoftic.com SSL key.
+
+- install any required DKIM keys.
 
 You should then reboot the host immediately with a pv-grub config
 profile. Don't forget to disable the 'Xenify Distro' option!
