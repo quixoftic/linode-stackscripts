@@ -269,7 +269,9 @@ function install_quixoftic_meta_package {
     [ -f /etc/fstab ] && mv /etc/fstab /etc/fstab.orig
     [ -f /etc/crypttab ] && mv /etc/crypttab /etc/crypttab.orig
 
-    apt_install $packagename
+    # This tends to bring in a bunch of crap, so run with
+    # --no-install-recommends.
+    apt_install --no-install-recommends $packagename
 }
 
 #
