@@ -77,10 +77,6 @@ etckeeper_commit "Set timezone to UTC."
 check_device /dev/xvdb
 check_device /dev/xvdc
 
-# All Quixoftic hosts use the distro kernel and use pv-grub.
-apt_install linux-image-amd64
-install_grub
-
 # Install Quixoftic embryo meta-config package. This will harden the
 # host properly and install all security-related packages.
 add_quixoftic_apt_sources quixoftic-temp
@@ -102,6 +98,11 @@ etckeeper_commit "Add user $USERNAME (groups: sudo, adm)."
 
 # Install user's ssh public key.
 install_ssh_pubkey $USERNAME "$SSHKEY"
+
+# All Quixoftic hosts use the distro kernel and use pv-grub. Do this
+# step late in the process, because the apt grub probes are slow.
+apt_install linux-image-amd64
+install_grub
 
 # Cleanup.
 apt_clean

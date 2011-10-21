@@ -77,10 +77,6 @@ etckeeper_commit "Set timezone to UTC."
 check_device /dev/xvdb
 check_device /dev/xvdc
 
-# All Quixoftic hosts use the distro kernel and use pv-grub.
-apt_install linux-image-amd64
-install_grub
-
 # Create user, add to admin groups.
 apt_install sudo
 add_user $USERNAME "$USERFULLNAME" $PASSWD
@@ -121,6 +117,11 @@ tmpfs                   /tmp            tmpfs    mode=1777,rw,nosuid,nodev      
 EOF
 rm /etc/fstab.orig
 etckeeper_commit "Updated fstab."
+
+# All Quixoftic hosts use the distro kernel and use pv-grub. Do this
+# step late in the process, because the apt grub probes are slow.
+apt_install linux-image-amd64
+install_grub
 
 # Cleanup.
 apt_clean
