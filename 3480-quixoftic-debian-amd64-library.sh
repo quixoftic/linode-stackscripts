@@ -268,7 +268,20 @@ function install_quixoftic_meta_package {
     [ -f /etc/postfix/master.cf ] && mv /etc/postfix/master.cf /etc/postfix/master.cf.orig
     [ -f /etc/fstab ] && mv /etc/fstab /etc/fstab.orig
     [ -f /etc/crypttab ] && mv /etc/crypttab /etc/crypttab.orig
+    etckeeper_commit "Move aside conflicting conffiles in preparatior for Quixoftic meta-config package."
 
+    # The 'shell' meta-config package can install either the 'shell'
+    # fstab package, or the 'default' fstab package. The 'shell' fstab
+    # package requires an encrypted /home fs, but there's no way to
+    # create that on first boot with a Linode kernel (they don't
+    # support the required crypto modules). Therefore, if we're
+    # installing the 'shell' meta-config, force-install the default
+    # fstab package here. The admin will have to install the encrypted
+    # home fs later.
+    if [ "$1" == "shell" ] ; then
+        apt_install quixoftic-fstab-default-config
+    fi
+    
     # This tends to bring in a bunch of crap, so run with
     # --no-install-recommends.
     apt_install --no-install-recommends $packagename

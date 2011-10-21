@@ -125,11 +125,6 @@ Your install was successful!
 This is a special configuration. Before rebooting, you must
 perform the following steps manually:
 
-- install an encrypted filesystem on /dev/xvdd
-
-- copy the contents of the /home filesystem to the encrypted
-  filesystem on /dev/xvdd
-
 - install the imap.quixoftic.com SSL key.
 
 - install the mx1.quixoftic.com SSL key.
@@ -138,10 +133,6 @@ perform the following steps manually:
 
 You should then reboot the host immediately with a pv-grub config
 profile. Don't forget to disable the 'Xenify Distro' option!
-
-Note that this host will pause indefinitely during the boot process
-until you provide the encrypted /home filesystem passphrase. You can
-do this by logging into the Linode's console server.
 EOF
 fi
 
@@ -152,11 +143,6 @@ Your install was successful!
 This is a special configuration. Before rebooting, you must
 perform the following steps manually:
 
-- install an encrypted filesystem on /dev/xvdd
-
-- copy the contents of the /home filesystem to the encrypted
-  filesystem on /dev/xvdd
-
 - install the imap.quixoftic.com SSL key.
 
 - install the mx1.quixoftic.com SSL key.
@@ -165,10 +151,6 @@ perform the following steps manually:
 
 You should then reboot the host immediately with a pv-grub config
 profile. Don't forget to disable the 'Xenify Distro' option!
-
-Note that this host will pause indefinitely during the boot process
-until you provide the encrypted /home filesystem passphrase. You can
-do this by logging into the Linode's console server.
 ***************
 
 "
