@@ -103,11 +103,47 @@ function trap_with_failure_email {
 # Package installation/upgrades.
 #
 
+function apt_get {
+    # A script- and log-safe wrapper around apt-get.
+    DEBIAN_FRONTEND="noninteractive" apt-get -q -y $*
+}
+
 function safe_upgrade {
     echo "Upgrading packages (safe)."
-    apt-get update
-    apt-get -y install aptitude
-    aptitude -y safe-upgrade
+    apt_get update
+    apt_get install aptitude
+    DEBIAN_FRONTEND="noninteractive" aptitude -q -y safe-upgrade
+}
+
+function upgrade_to_sid {
+    echo "Preparing to upgrade to sid."
+    apt_get update
+
+    echo "Adding sid sources to apt."
+    rm -f /etc/apt/sources.list
+    cat - > /etc/apt/sources.list<<EOF
+deb http://ftp.us.debian.org/debian/ sid main contrib non-free
+deb-src http://ftp.us.debian.org/debian/ sid main contrib non-free
+EOF
+
+    # apt-get dist-upgrade will ask for confirmation of overwriting
+    # /etc/sudoers, even with the -y flag, so we have to temporarily
+    # uninstall the package and remove the /etc/sudoers file. It will
+    # be re-created when we upgrade.
+    echo "Temporarily removing sudo package."
+    apt_get purge sudo
+
+    # Yes, purging sudo doesn't remove /etc/sudoers.
+    rm -f /etc/sudoers
+
+    echo "Upgrading to sid."
+    apt_get update
+    apt_get --purge dist-upgrade
+
+    echo "Purging packages that are unnecessary after the upgrade."
+    apt_get --purge autoremove
+
+    apt_install sudo
 }
 
 function apt_install {
@@ -116,7 +152,11 @@ function apt_install {
         return 1
     fi
     echo "Installing $1"
-    aptitude -y install $1
+    apt_get install $1
+}
+
+function apt_clean {
+    apt_get clean
 }
 
 function install_grub {
@@ -160,6 +200,77 @@ function install_postfix_null_client {
     /etc/init.d/postfix restart
 }
 
+
+#
+# Quixoftic-specific.
+#
+
+function add_quixoftic_apt_sources {
+    if [ ! -n "$1" ] ; then
+        echo "add_quixoftic_apt_sources function requires a filename."
+        return 1
+    fi
+    local filename="/etc/apt/sources.list.d/$1.list"
+    echo "Adding Quixoftic apt sources in $filename"
+    cat - > $filename<<EOF
+deb http://packages.quixoftic.com:8086/debian/ sid main contrib non-free quixoftic-local
+deb-src http://packages.quixoftic.com:8086/debian/ sid main contrib non-free quixoftic-local
+EOF
+    apt_get update
+    echo "Installing Quixoftic archive keyring."
+    apt_get --allow-unauthenticated install quixoftic-archive-keyring
+    # Update one more time so that Quixoftic packages are marked as trusted.
+    apt_get update
+}
+
+function remove_quixoftic_apt_sources {
+    if [ ! -n "$1" ] ; then
+        echo "remove_quixoftic_apt_sources function requires a filename."
+        return 1
+    fi
+    local filename="/etc/apt/sources.list.d/$1.list"
+    echo "Removing Quixoftic apt sources from $filename."
+    rm -f $filename
+    echo "Updating apt to reflect changes."
+    apt_get update
+}
+
+function install_quixoftic_meta_package {
+    # Note: assumes that the Quixoftic repo has been added to apt's
+    # sources and that the quixoftic-archive-keyring package has been
+    # installed.
+    if [ ! -n "$1" ] ; then
+        echo "install_quixoftic_meta-package function requires a config name."
+        return 1
+    fi
+    local packagename="quixoftic-meta-$1-config"
+    echo "Preparing to install Quixoftic meta-package $packagename"
+
+    echo "Installing preseed values for $packagename"
+    apt_install "quixoftic-preseed-$1-config"
+
+    # There appears to be no way to tell apt-get not to ask questions
+    # when you want to overwrite /etc/crypttab, so we pre-install
+    # cryptsetup here so that we can move /etc/crypttab out of the way
+    # below. It should be required by all quixoftic-meta config
+    # packages, as Quixoftic policy requires encrypted swap.
+    #
+    # XXX dhess - yes, this is a hack.
+    apt_install cryptsetup
+    
+    # Any files that may have been modified by the StackScript earlier
+    # should be moved aside here, otherwise apt-get will display an
+    # interactive prompt, even when told to run non-interactive.
+    #
+    # XXX dhess - yes, this is also a hack.
+    echo "Moving aside any files that might cause apt to prompt for changes."
+    [ -f /etc/postfix/main.cf ] && mv /etc/postfix/main.cf /etc/postfix/main.cf.orig
+    [ -f /etc/postfix/master.cf ] && mv /etc/postfix/master.cf /etc/postfix/master.cf.orig
+    [ -f /etc/fstab ] && mv /etc/fstab /etc/fstab.orig
+    [ -f /etc/crypttab ] && mv /etc/crypttab /etc/crypttab.orig
+
+    apt_install $packagename
+}
 
 #
 # Basic system setup/configuration.
