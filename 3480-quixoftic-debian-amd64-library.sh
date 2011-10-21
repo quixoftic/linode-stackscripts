@@ -151,8 +151,8 @@ function apt_install {
         echo "apt_install function requires a package name."
         return 1
     fi
-    echo "Installing $1"
-    apt_get install $1
+    echo "Installing $*"
+    apt_get install $*
 }
 
 function apt_clean {
