@@ -122,6 +122,9 @@ EOF
 rm /etc/fstab.orig
 etckeeper_commit "Updated fstab."
 
+# Cleanup.
+apt_clean
+
 if [ -n "$NOTIFYEMAIL" ] ; then
     mailx -s "Linode VPS $HOSTNAME install successful." "$NOTIFYEMAIL" <<EOF
 Your install was successful!
