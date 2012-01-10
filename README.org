@@ -1,0 +1,33 @@
+* WHAT
+  These are StackScripts for bootstrapping quixoftic.com Linodes. The
+  scripts are fairly specific to building Quixoftic hosts, but might
+  be useful to other Linode users with a bit of work. Each script
+  attempts to build a host that is secure out of the box.
+  
+  3476-quixoftic-debian-stable-embryo.sh builds an x86-64 Debian
+  stable Linode "embryo" -- that is, a minimally-configured machine
+  whose only public service is SSH.
+
+  3483-quixoftic-debian-sid-embryo.sh builds an x86-64 Debian sid
+  embryo.
+
+  3485-shell.quixoftic.com.sh builds the specific host
+  shell.quixoftic.com.
+
+  3480-quixoftic-debian-amd64-library.sh is a library of functions
+  used by the other StackScripts.
+
+** Non-standard devices
+   All quixoftic.com Linodes require a swap device configured on
+   /dev/xvdb, and a separate /var/log ext3 filesystem on /dev/xvdc.
+   The scripts check for these filesystems, and fail if the Linode
+   config profile doesn't provide them. Some of the host-specific
+   scripts may require additional filesystem devices, as well.
+
+* LICENSE
+  All of the scripts are released under the MIT license.
+
+* CONTACT
+  For questions, contact src@quixoftic.com or see:
+
+  http://www.quixoftic.com/
