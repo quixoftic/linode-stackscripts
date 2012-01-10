@@ -30,4 +30,4 @@
 * CONTACT
   For questions, contact src@quixoftic.com or see:
 
-  http://www.quixoftic.com/
+  [[http://www.quixoftic.com/]]
