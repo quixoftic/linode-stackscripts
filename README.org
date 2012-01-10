@@ -28,6 +28,6 @@
   All of the scripts are released under the MIT license.
 
 * CONTACT
-  For questions, contact src@quixoftic.com or see:
+  For questions, contact [[mailto:src@quixoftic.com][src@quixoftic.com]] or see:
 
   [[http://www.quixoftic.com/]]
