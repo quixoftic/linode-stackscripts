@@ -538,6 +538,6 @@ function crypttab_install_encrypted_swap {
         apt_install cryptsetup
     fi
     cat - >> /etc/crypttab<<EOF
-swap                $dev               /dev/urandom         swap,cipher=aes-xts-plain
+swap                $dev               /dev/urandom         swap,cipher=aes-xts-plain,size=256,hash=ripemd160
 EOF
 }
