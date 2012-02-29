@@ -51,9 +51,12 @@ safe_upgrade
 apt_install etckeeper
 apt_install heirloom-mailx
 
-# Set the hostname, disable dhcpcd's ability to overwrite it.
+# Set the FQDN, and make sure that the resolver is updated by
+# restarting the eth0 interface. This is overkill, but reloading
+# resolvconf doesn't work reliably on Debian stable, at least.
 apt_install resolvconf
 resolvconf_set_domainname $DOMAINNAME
+restart_interface eth0
 etckeeper_commit "Set domain name to $DOMAINNAME."
 set_hostname $HOSTNAME
 etckeeper_commit "Set hostname to $HOSTNAME."
@@ -108,12 +111,12 @@ rm -rf /etc/fstab
 cat - > /etc/fstab<<EOF
 # /etc/fstab: static file system information.
 #
-# <file system>         <mount point>   <type>   <options>                       <dump>  <pass>
-proc                    /proc           proc     defaults                        0       0
-/dev/mapper/swap        none            swap     sw                              0       0
-/dev/xvda               /               ext3     noatime,errors=remount-ro       0       1
-/dev/xvdc               /var/log        ext3     noatime,nodev,nosuid,noexec     0       1
-tmpfs                   /tmp            tmpfs    mode=1777,rw,nosuid,nodev       0       0
+# <file system>         <mount point>   <type>   <options>                                 <dump>  <pass>
+proc                    /proc           proc     defaults                                  0       0
+/dev/mapper/swap        none            swap     sw                                        0       0
+/dev/xvda               /               ext3     noatime,errors=remount-ro,barrier=0       0       1
+/dev/xvdc               /var/log        ext3     noatime,nodev,nosuid,noexec,barrier=0     0       1
+tmpfs                   /tmp            tmpfs    mode=1777,rw,nosuid,nodev                 0       0
 EOF
 rm /etc/fstab.orig
 etckeeper_commit "Updated fstab."

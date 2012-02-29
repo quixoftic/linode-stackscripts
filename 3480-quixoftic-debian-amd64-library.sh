@@ -116,14 +116,21 @@ function safe_upgrade {
 }
 
 function upgrade_to_sid {
+    local debian_mirror=""
+    if [ ! -n "$1" ] ; then
+        debian_mirror="ftp.us.debian.org"
+    else
+        debian_mirror=$1
+    fi
+
     echo "Preparing to upgrade to sid."
     apt_get update
 
     echo "Adding sid sources to apt."
     rm -f /etc/apt/sources.list
     cat - > /etc/apt/sources.list<<EOF
-deb http://ftp.us.debian.org/debian/ sid main contrib non-free
-deb-src http://ftp.us.debian.org/debian/ sid main contrib non-free
+deb http://$debian_mirror/debian/ sid main contrib non-free
+deb-src http://$debian_mirror/debian/ sid main contrib non-free
 EOF
 
     # apt-get dist-upgrade will ask for confirmation of overwriting
@@ -243,11 +250,12 @@ function install_quixoftic_meta_package {
         echo "install_quixoftic_meta-package function requires a config name."
         return 1
     fi
-    local packagename="quixoftic-meta-$1-config"
+    local packagename="$1"
     echo "Preparing to install Quixoftic meta-package $packagename"
 
     echo "Installing preseed values for $packagename"
-    apt_install "quixoftic-preseed-$1-config"
+    local preseed=$(echo $packagename | sed 's/-meta-/-preseed-/')
+    apt_install $preseed
 
     # There appears to be no way to tell apt-get not to ask questions
     # when you want to overwrite /etc/crypttab, so we pre-install
@@ -268,8 +276,10 @@ function install_quixoftic_meta_package {
     [ -f /etc/postfix/master.cf ] && mv /etc/postfix/master.cf /etc/postfix/master.cf.orig
     [ -f /etc/fstab ] && mv /etc/fstab /etc/fstab.orig
     [ -f /etc/crypttab ] && mv /etc/crypttab /etc/crypttab.orig
-    etckeeper_commit "Move aside conflicting conffiles in preparatior for Quixoftic meta-config package."
+    etckeeper_commit "Move aside conflicting conffiles in preparation for Quixoftic meta-config package."
 
+    # XXX dhess - Fixme. Doesn't work with new naming scheme.
+    #
     # The 'shell' meta-config package can install either the 'shell'
     # fstab package, or the 'default' fstab package. The 'shell' fstab
     # package requires an encrypted /home fs, but there's no way to
@@ -292,13 +302,11 @@ function install_quixoftic_meta_package {
 #
 
 function set_timezone_to_utc {
-    # Set timezone to Etc/UTC. tzdata doesn't really use debconf, so
-    # easiest way is simply to remove /etc/localtime and
-    # /etc/timezone, then reconfigure tzdata non-interactively. This
-    # will set the time to Etc/UTC by default.
+    # Set timezone to Etc/UTC.
     echo "Setting timezone to Etc/UTC."
     rm -f /etc/localtime
     rm -f /etc/timezone
+    echo "Etc/UTC" > /etc/timezone
     dpkg-reconfigure -f noninteractive tzdata
 }
 
@@ -314,7 +322,10 @@ function resolvconf_set_domainname {
     # means it will override all other settings, including the "search
     # ..." directives inserted by dhcpcd.
     echo "domain $domainname" >> /etc/resolvconf/resolv.conf.d/tail
-    /etc/init.d/resolvconf reload
+
+    # NOTE: don't reload resolvconf here; on Debian stable, at least,
+    # it will hose /etc/resolv.conf. The safe option is to run the
+    # restart_eth0 function.
 }
 
 function set_mailname {
@@ -340,10 +351,21 @@ function set_hostname {
     rm -f /etc/hostname
     echo $hname > /etc/hostname
     hostname -F /etc/hostname
+}
 
-    # Make sure dhcpcd doesn't set the hostname from DHCP.
-    sed -i -r "s/^SET_HOSTNAME='yes'$/#SET_HOSTNAME='yes'/" /etc/default/dhcpcd
-    /etc/init.d/networking restart
+# This function is useful after changing your domain name/search in
+# resolv.conf.
+function restart_interface {
+    if [ ! -n "$1" ] ; then
+        echo "restart_interface function requires an interface name."
+        return 1
+    fi
+    local interface=$1
+    # Note: neither running "/etc/init.d/networking restart" nor
+    # ifup/ifdown -a works properly, at least not on Debian stable, so
+    # do it explicitly.
+    ifdown $interface
+    ifup $interface
 }
 
 function etckeeper_commit {

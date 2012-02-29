@@ -25,15 +25,16 @@
 
 HOSTNAME=shell
 DOMAINNAME=quixoftic.com
+CONFIG=quixoftic-meta-shell-config
 
 # <UDF name="mailmanpasswd" label="Initial password for the mailman mailing list."/>
 # <UDF name="qxallpasswd" label="Initial password for the quixoftic-all mailing list."/>
+# <UDF name="debian_mirror" label="Debian mirror to use for install" default="ftp.us.debian.org"/>
 # <UDF name="username" label="User account to create (will be added to sudo, adm groups)."/>
 # <UDF name="userfullname" label="First and last name of user."/>
 # <UDF name="passwd" label="*Encrypted* password."/>
 # <UDF name="sshkey" label="ssh public key for above account"/>
 # <UDF name="notifyemail" label="Send email to this address when installation is complete (optional)."/>
-
 
 source <ssinclude StackScriptID=3480>
 
@@ -50,13 +51,16 @@ enable_logging $LOGFILE
 secure_ssh
 
 # Upgrade to sid and install some key packages.
-upgrade_to_sid
+upgrade_to_sid $DEBIAN_MIRROR
 apt_install etckeeper
 apt_install heirloom-mailx
 
-# Set the hostname, disable dhcpcd's ability to overwrite it.
+# Set the FQDN, and make sure that the resolver is updated by
+# restarting the eth0 interface. This is overkill, but it's portable,
+# as reloading resolvconf doesn't work reliably on Debian stable.
 apt_install resolvconf
 resolvconf_set_domainname $DOMAINNAME
+restart_interface eth0
 etckeeper_commit "Set domain name to $DOMAINNAME."
 set_hostname $HOSTNAME
 etckeeper_commit "Set hostname to $HOSTNAME."
@@ -85,7 +89,7 @@ check_device /dev/xvdd
 # Install Quixoftic shell meta-config package.
 add_quixoftic_apt_sources quixoftic-temp
 etckeeper_commit "Add temporary Quixoftic apt sources and archive keyring."
-install_quixoftic_meta_package shell
+install_quixoftic_meta_package $CONFIG
 remove_quixoftic_apt_sources quixoftic-temp
 etckeeper_commit "Remove temporary Quixoftic apt sources."
 

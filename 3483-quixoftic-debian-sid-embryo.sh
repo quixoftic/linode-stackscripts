@@ -26,6 +26,8 @@
 
 # <UDF name="hostname" label="The new system's hostname (NOT the FQDN, just the simple hostname, e.g., 'www')."/>
 # <UDF name="domainname" label="The system's DNS domain name (e.g., 'quixoftic.com')."/>
+# <UDF name="debian_mirror" label="Debian mirror to use for install" default="ftp.us.debian.org"/>
+# <UDF name="config" label="Select a config package to install" oneOf="quixoftic-meta-embryo-config"/>
 # <UDF name="username" label="User account to create (will be added to sudo, adm groups)."/>
 # <UDF name="userfullname" label="First and last name of user."/>
 # <UDF name="passwd" label="*Encrypted* password."/>
@@ -47,13 +49,16 @@ enable_logging $LOGFILE
 secure_ssh
 
 # Upgrade to sid and install some key packages.
-upgrade_to_sid
+upgrade_to_sid $DEBIAN_MIRROR
 apt_install etckeeper
 apt_install heirloom-mailx
 
-# Set the hostname, disable dhcpcd's ability to overwrite it.
+# Set the FQDN, and make sure that the resolver is updated by
+# restarting the eth0 interface. This is overkill, but it's portable,
+# as reloading resolvconf doesn't work reliably on Debian stable.
 apt_install resolvconf
 resolvconf_set_domainname $DOMAINNAME
+restart_interface eth0
 etckeeper_commit "Set domain name to $DOMAINNAME."
 set_hostname $HOSTNAME
 etckeeper_commit "Set hostname to $HOSTNAME."
@@ -77,11 +82,10 @@ etckeeper_commit "Set timezone to UTC."
 check_device /dev/xvdb
 check_device /dev/xvdc
 
-# Install Quixoftic embryo meta-config package. This will harden the
-# host properly and install all security-related packages.
+# Install the selected Quixoftic meta-config package.
 add_quixoftic_apt_sources quixoftic-temp
 etckeeper_commit "Add temporary Quixoftic apt sources and archive keyring."
-install_quixoftic_meta_package embryo
+install_quixoftic_meta_package $CONFIG
 remove_quixoftic_apt_sources quixoftic-temp
 etckeeper_commit "Remove temporary Quixoftic apt sources."
 
